@@ -5,12 +5,15 @@ import Button from "@/app/components/Button";
 import Input from "@/app/components/inputs/Input";
 import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
+import axios from "axios";
+import toast from "react-hot-toast";
+import { signIn } from "next-auth/react";
 
 type Variant = "LOGIN" | "REGISTER";
 
 const AuthForm = () => {
   const [variant, variantSet] = useState<Variant>("LOGIN");
-  //   const [isLoading, isLoadingSet] = useState(false);
+  const [isLoading, isLoadingSet] = useState(false);
 
   const toggleVariant = useCallback(() => {
     if (variant === "LOGIN") {
@@ -23,7 +26,8 @@ const AuthForm = () => {
   const {
     register,
     handleSubmit,
-    formState: { errors, isLoading },
+    reset,
+    formState: { errors },
   } = useForm<FieldValues>({
     defaultValues: {
       name: "",
@@ -32,18 +36,38 @@ const AuthForm = () => {
     },
   });
 
-  const onSubmitHandler: SubmitHandler<FieldValues> = (data) => {
+  const onSubmitHandler: SubmitHandler<FieldValues> = async (data) => {
+    isLoadingSet((p) => !p);
     if (variant === "REGISTER") {
-      //axios register
+      try {
+        await axios.post("/api/register", data);
+      } catch (e) {
+        toast.error("Something went wrong!");
+      }
     }
 
     if (variant === "LOGIN") {
-      //Next auth sign in
+      signIn("credentials", {
+        ...data,
+        redirect: false,
+      }).then((callback) => {
+        if (callback?.error) toast.error(callback.error);
+        if (callback?.ok) toast.success("Logged In!");
+      });
     }
+    reset();
+    isLoadingSet((p) => !p);
   };
 
   const socialAction = (action: string) => {
-    // next auth social sign in
+    isLoadingSet((p) => !p);
+
+    signIn(action, { redirect: false })
+      .then((cb) => {
+        if (cb?.error) toast.error(cb.error);
+        if (cb?.ok) toast.success("Logged In!");
+      })
+      .finally(() => isLoadingSet((p) => !p));
   };
 
   return (
