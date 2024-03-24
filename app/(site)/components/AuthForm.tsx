@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
 import Button from "@/app/components/Button";
 import Input from "@/app/components/inputs/Input";
@@ -7,13 +7,22 @@ import AuthSocialButton from "./AuthSocialButton";
 import { BsGithub, BsGoogle } from "react-icons/bs";
 import axios from "axios";
 import toast from "react-hot-toast";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 type Variant = "LOGIN" | "REGISTER";
 
 const AuthForm = () => {
+  const session = useSession();
+  const router = useRouter();
   const [variant, variantSet] = useState<Variant>("LOGIN");
   const [isLoading, isLoadingSet] = useState(false);
+
+  useEffect(() => {
+    if (session?.status === "authenticated") {
+      router.push("/users");
+    }
+  }, [session?.status, router]);
 
   const toggleVariant = useCallback(() => {
     if (variant === "LOGIN") {
@@ -40,7 +49,10 @@ const AuthForm = () => {
     isLoadingSet((p) => !p);
     if (variant === "REGISTER") {
       try {
-        await axios.post("/api/register", data);
+        const res = await axios.post("/api/register", data);
+        if (res?.status === 201) {
+          toggleVariant();
+        }
       } catch (e) {
         toast.error("Something went wrong!");
       }
@@ -51,8 +63,11 @@ const AuthForm = () => {
         ...data,
         redirect: false,
       }).then((callback) => {
-        if (callback?.error) toast.error(callback.error);
-        if (callback?.ok) toast.success("Logged In!");
+        if (callback?.error) toast.error(callback?.error);
+        if (callback?.ok) {
+          toast.success("Logged In!");
+          router.push("/users");
+        }
       });
     }
     reset();
@@ -64,8 +79,10 @@ const AuthForm = () => {
 
     signIn(action, { redirect: false })
       .then((cb) => {
-        if (cb?.error) toast.error(cb.error);
-        if (cb?.ok) toast.success("Logged In!");
+        if (cb?.error) toast.error(cb?.error);
+        if (cb?.ok) {
+          toast.success("Logged In!");
+        }
       })
       .finally(() => isLoadingSet((p) => !p));
   };
@@ -131,9 +148,9 @@ const AuthForm = () => {
               ? "New to Chit-Chat?"
               : "Already have an account?"}
           </div>
-          <div onClick={toggleVariant} className="underline cursor-pointer">
+          <h3 onClick={toggleVariant} className="underline cursor-pointer">
             {variant === "LOGIN" ? "Create an account" : "Login"}
-          </div>
+          </h3>
         </div>
       </div>
     </div>
