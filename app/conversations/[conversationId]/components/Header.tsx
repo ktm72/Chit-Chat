@@ -3,8 +3,9 @@ import Avatar from "@/app/components/Avatar";
 import useOtherUser from "@/hooks/useOtherUser";
 import { Conversation, User } from "@prisma/client";
 import Link from "next/link";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { HiChevronLeft, HiEllipsisHorizontal } from "react-icons/hi2";
+import ProfileDrawer from "./ProfileDrawer";
 
 type Props = {
   conversation: Conversation & {
@@ -14,6 +15,7 @@ type Props = {
 
 const Header: React.FC<Props> = ({ conversation }) => {
   const otherUser = useOtherUser(conversation);
+  const [drawerOpen, drawerOpenSet] = useState(false);
 
   const statusText = useMemo(() => {
     if (conversation.isGroup) {
@@ -22,28 +24,35 @@ const Header: React.FC<Props> = ({ conversation }) => {
     return "Active";
   }, [conversation]);
   return (
-    <div className="bg-white w-full flex border-b sm:px-4 py-3 px-4 lg:px-6 justify-between items-center shadow-sm">
-      <div className="flex gap-3 items-center">
-        <Link
-          className="lg:hidden block text-sky-600 hover:text-sky-600 cursor-pointer"
-          href="/conversations"
-        >
-          <HiChevronLeft size={32} />
-        </Link>
-        <Avatar user={otherUser} />
-        <div className="flex flex-col">
-          <h5>{conversation.name || otherUser.name}</h5>
-          <div className="text-sm font-light text-neutral-500">
-            {statusText}
+    <React.Fragment>
+      <ProfileDrawer
+        data={conversation}
+        isOpen={drawerOpen}
+        onClose={() => drawerOpenSet((p) => !p)}
+      />
+      <div className="bg-white w-full flex border-b sm:px-4 py-3 px-4 lg:px-6 justify-between items-center shadow-sm">
+        <div className="flex gap-3 items-center">
+          <Link
+            className="lg:hidden block text-sky-600 hover:text-sky-600 cursor-pointer"
+            href="/conversations"
+          >
+            <HiChevronLeft size={32} />
+          </Link>
+          <Avatar user={otherUser} />
+          <div className="flex flex-col">
+            <h5>{conversation.name || otherUser.name}</h5>
+            <div className="text-sm font-light text-neutral-500">
+              {statusText}
+            </div>
           </div>
         </div>
+        <HiEllipsisHorizontal
+          onClick={() => drawerOpenSet((p) => !p)}
+          size={32}
+          className="text-sky-600 hover:text-sky-600 transition cursor-pointer"
+        />
       </div>
-      <HiEllipsisHorizontal
-        onClick={() => {}}
-        size={32}
-        className="text-sky-600 hover:text-sky-600 transition cursor-pointer"
-      />
-    </div>
+    </React.Fragment>
   );
 };
 
