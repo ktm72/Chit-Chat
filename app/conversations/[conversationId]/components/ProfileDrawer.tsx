@@ -9,6 +9,7 @@ import { BsTrash } from "react-icons/bs";
 import Modal from "@/app/components/Modal";
 import ConfirmModal from "./ConfirmModal";
 import AvatarGroup from "@/app/components/AvatarGroup";
+import useActiveList from "@/hooks/useActiveList";
 
 type Props = {
   data: Conversation & {
@@ -21,6 +22,10 @@ type Props = {
 const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
   const otherUser = useOtherUser(data);
   const [confirmOpen, confirmOpenSet] = useState(false);
+
+  const { members } = useActiveList();
+  const isActive = members.indexOf(otherUser?.email!) !== -1;
+
   const joinedDate = useMemo(() => {
     return format(new Date(otherUser.createdAt), "pp");
   }, [otherUser.createdAt]);
@@ -31,8 +36,8 @@ const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
 
   const statusText = useMemo(() => {
     if (data.isGroup) return `${data.users.length} members`;
-    return "Active";
-  }, [data]);
+    return isActive ? "Active" : "";
+  }, [data, isActive]);
 
   return (
     <React.Fragment>

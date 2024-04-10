@@ -1,6 +1,7 @@
 import getCurrentUser from "@/actions/getCurrentUser";
 import { NextResponse } from "next/server";
 import prisma from "@/libs/prismadb";
+import { pusherServer } from "@/libs/pusher";
 
 interface IParams {
   conversationId?: string;
@@ -24,10 +25,13 @@ export async function DELETE(
       },
       include: {
         users: true,
+        messages: true,
       },
     });
 
     if (!existingConv) return new NextResponse("Invalid Id", { status: 400 });
+
+    const messageIds = existingConv.messages.map((message) => message.id);
 
     const deletedConv = await prisma.conversation.deleteMany({
       where: {
@@ -36,6 +40,26 @@ export async function DELETE(
           hasSome: [currUser.id],
         },
       },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: currUser.id,
+      },
+      data: {
+        conversationIds: {
+          set: currUser.conversationIds.filter((id) => id !== conversationId),
+        },
+        seenMessageIds: {
+          set: currUser.seenMessageIds.filter((id) => !messageIds.includes(id)),
+        },
+      },
+    });
+
+    existingConv.users.forEach((user) => {
+      if (user.email) {
+        pusherServer.trigger(user.email, "conversation:remove", existingConv);
+      }
     });
 
     return NextResponse.json(deletedConv);
