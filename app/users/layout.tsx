@@ -9,6 +9,7 @@ interface IUsersLayout {
 
 const UsersLayout = async ({ children }: IUsersLayout) => {
   const users = await getUsers();
+
   return (
     <Sidebar>
       <div className="h-full">
