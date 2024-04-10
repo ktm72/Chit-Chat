@@ -8,6 +8,7 @@ import Avatar from "@/app/components/Avatar";
 import { BsTrash } from "react-icons/bs";
 import Modal from "@/app/components/Modal";
 import ConfirmModal from "./ConfirmModal";
+import AvatarGroup from "@/app/components/AvatarGroup";
 
 type Props = {
   data: Conversation & {
@@ -35,10 +36,6 @@ const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
 
   return (
     <React.Fragment>
-      {/* <Modal isOpen={isModalOpen} onClose={() => confirmOpenSet((p) => !p)}>
-        <div className="bg-white p-5">modal</div>
-      </Modal> */}
-
       <ConfirmModal
         isOpen={confirmOpen}
         onClose={() => confirmOpenSet((p) => !p)}
@@ -86,7 +83,11 @@ const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
                       <div className="relative mt-6 flex-1 px-4 sm:px-4">
                         <div className="flex flex-col items-center">
                           <div className="mb-2">
-                            <Avatar user={otherUser} />
+                            {data.isGroup ? (
+                              <AvatarGroup users={data.users} />
+                            ) : (
+                              <Avatar user={otherUser} />
+                            )}
                           </div>
                           <div>{title}</div>
                           <div className="text-sm text-gray-500">
@@ -106,14 +107,25 @@ const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
                             </div>
                           </div>
                           <div className="w-full py-5 sm:px-0 sm:pt-0">
-                            <div className="space-y-8 px-4 sm:space-y-6 sm:px-6">
-                              {!data.isGroup && (
+                            <dl className="space-y-8 px-4 sm:space-y-6 sm:px-6">
+                              {!data.isGroup ? (
                                 <div>
                                   <dt className="text-sm font-medium text-gray-500 sm:w-40 sm:flex-shrink-0">
                                     Email
                                   </dt>
                                   <dd className="mt-1 text-sm text-gray-900 sm:col-span-2">
                                     {otherUser.email}
+                                  </dd>
+                                </div>
+                              ) : (
+                                <div>
+                                  <dt className="text-sm font-medium text-gray-500 sm:w-40 sm: flex-shrink-0">
+                                    Emails
+                                  </dt>
+                                  <dd className="mt-1 text-sm text-gray-900 sm:col-span-2">
+                                    {data.users
+                                      .map((user) => user.email)
+                                      .join(", ")}
                                   </dd>
                                 </div>
                               )}
@@ -132,7 +144,7 @@ const ProfileDrawer: React.FC<Props> = ({ data, isOpen, onClose }) => {
                                   </div>
                                 </React.Fragment>
                               )}
-                            </div>
+                            </dl>
                           </div>
                         </div>
                       </div>
