@@ -24,16 +24,33 @@ export async function DELETE(
       },
       include: {
         users: true,
+        messages: true,
       },
     });
 
     if (!existingConv) return new NextResponse("Invalid Id", { status: 400 });
+
+    const messageIds = existingConv.messages.map((message) => message.id);
 
     const deletedConv = await prisma.conversation.deleteMany({
       where: {
         id: conversationId,
         userIds: {
           hasSome: [currUser.id],
+        },
+      },
+    });
+
+    await prisma.user.update({
+      where: {
+        id: currUser.id,
+      },
+      data: {
+        conversationIds: {
+          set: currUser.conversationIds.filter((id) => id !== conversationId),
+        },
+        seenMessageIds: {
+          set: currUser.seenMessageIds.filter((id) => !messageIds.includes(id)),
         },
       },
     });

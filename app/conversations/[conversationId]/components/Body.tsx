@@ -44,11 +44,24 @@ const Body: React.FC<Props> = ({ initialMessages }) => {
       bottomRef?.current?.scrollIntoView();
     };
 
+    const updateMessageHandler = (newMsg: FullMessageType) => {
+      messagesSet((current) =>
+        current.map((currMsg) => {
+          if (currMsg.id === newMsg.id) {
+            return newMsg;
+          }
+          return currMsg;
+        })
+      );
+    };
+
     pusherClient.bind("messages:new", messageHandler);
+    pusherClient.bind("message:update", updateMessageHandler);
 
     return () => {
       pusherClient.unsubscribe(conversationId);
       pusherClient.unbind("messages:new", messageHandler);
+      pusherClient.unbind("message:update", updateMessageHandler);
     };
   }, [conversationId]);
   return (
